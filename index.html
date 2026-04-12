@@ -2,191 +2,307 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Technova Academy - تسجيل الدخول</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Technova Academy | STEM Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-    .container { background: white; border-radius: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 100%; max-width: 450px; padding: 2.5rem; }
-    h2 { color: #1a202c; text-align: center; margin-bottom: 0.5rem; }
-    .subtitle { text-align: center; color: #718096; margin-bottom: 2rem; }
-    .input-group { margin-bottom: 1.5rem; }
-    label { display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500; }
-    input { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; transition: border-color 0.2s; }
-    input:focus { outline: none; border-color: #667eea; }
-    button { width: 100%; padding: 14px; background: #667eea; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, background 0.2s; }
-    button:hover { background: #5a67d8; transform: translateY(-2px); }
-    .message { padding: 12px; border-radius: 8px; margin: 1rem 0; display: none; }
-    .error { background: #fed7d7; color: #c53030; border: 1px solid #fc8181; }
-    .success { background: #c6f6d5; color: #276749; border: 1px solid #9ae6b4; }
-    .info { background: #e2e8f0; color: #2d3748; padding: 1rem; border-radius: 12px; margin: 1rem 0; font-size: 0.9rem; }
-    .quick-login { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 1rem; }
-    .quick-btn { background: #edf2f7; color: #4a5568; padding: 8px; border: 1px solid #cbd5e0; font-size: 0.85rem; }
-    .quick-btn:hover { background: #e2e8f0; transform: none; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; color: #f8fafc; }
+    .login-container { max-width: 450px; margin: 10vh auto; padding: 2rem; background: #1e293b; border-radius: 24px; border: 1px solid #334155; }
+    .dashboard { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { background: #1e293b; border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #1e293b; border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid #334155; }
+    .stat-card i { font-size: 2rem; color: #3b82f6; margin-bottom: 10px; }
+    .card { background: #1e293b; border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #334155; }
+    input, select, button { padding: 12px; border-radius: 12px; font-size: 1rem; }
+    input, select { background: #0f172a; border: 1px solid #334155; color: white; width: 100%; margin-bottom: 10px; }
+    button { background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button.danger { background: #ef4444; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
+    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn { background: #334155; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+    .tab-btn.active { background: #3b82f6; }
+    .hidden { display: none !important; }
+    .message { padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .error { background: #7f1d1d; color: #fecaca; }
+    .success { background: #14532d; color: #bbf7d0; }
+    @media (max-width: 768px) { body { padding: 10px; } }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h2><i class="fas fa-cube" style="color: #667eea;"></i> Technova Academy</h2>
-  <p class="subtitle">نظام إدارة STEM المتكامل</p>
+<div id="loginScreen" class="login-container">
+  <h2 style="color: #3b82f6; text-align: center; margin-bottom: 1.5rem;">
+    <i class="fas fa-cube"></i> Technova Academy
+  </h2>
+  <p style="text-align: center; margin-bottom: 1.5rem; opacity: 0.8;">نظام إدارة STEM المتكامل</p>
   
-  <div id="errorMsg" class="message error"></div>
-  <div id="successMsg" class="message success"></div>
-  <div id="loadingMsg" style="text-align: center; margin: 1rem 0; display: none; color: #667eea;">
-    <i class="fas fa-spinner fa-spin"></i> جاري الاتصال...
-  </div>
+  <div id="loginError" class="message error hidden"></div>
   
-  <div class="input-group">
-    <label>البريد الإلكتروني</label>
-    <input type="email" id="email" placeholder="admin@technova.com" value="admin@technova.com" dir="ltr">
-  </div>
+  <input type="email" id="email" placeholder="البريد الإلكتروني" value="admin@technova.com" dir="ltr">
+  <input type="password" id="password" placeholder="كلمة المرور" value="123456" dir="ltr">
   
-  <div class="input-group">
-    <label>كلمة المرور</label>
-    <input type="password" id="password" placeholder="••••••••" dir="ltr">
-  </div>
-  
-  <button onclick="login()">
+  <button onclick="login()" style="width: 100%; margin-top: 1rem;">
     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
   </button>
   
-  <div class="info">
-    <strong><i class="fas fa-lightbulb"></i> جرب أحد الحلول السريعة:</strong>
+  <p style="margin-top: 1rem; font-size: 0.8rem; text-align: center; opacity: 0.7;">
+    admin@technova.com / 123456
+  </p>
+</div>
+
+<div id="dashboardScreen" class="dashboard hidden">
+  <div class="header">
+    <h2><i class="fas fa-cube" style="color: #3b82f6;"></i> Technova Dashboard</h2>
+    <div>
+      <span id="userName" style="margin-left: 15px;"></span>
+      <button onclick="logout()" class="danger"><i class="fas fa-sign-out-alt"></i> خروج</button>
+    </div>
   </div>
   
-  <div class="quick-login">
-    <button class="quick-btn" onclick="fillCredentials('admin@technova.com', 'admin')">
-      admin / admin
-    </button>
-    <button class="quick-btn" onclick="fillCredentials('admin@technova.com', '123456')">
-      admin / 123456
-    </button>
-    <button class="quick-btn" onclick="showCreateUserGuide()">
-      <i class="fas fa-user-plus"></i> إنشاء جديد
-    </button>
+  <div class="stats-grid">
+    <div class="stat-card"><i class="fas fa-users"></i><h3 id="studentCount">0</h3><p>الطلاب</p></div>
+    <div class="stat-card"><i class="fas fa-layer-group"></i><h3 id="levelCount">0</h3><p>المستويات</p></div>
+    <div class="stat-card"><i class="fas fa-trophy"></i><h3 id="topStudent">-</h3><p>المتصدر</p></div>
   </div>
   
-  <div style="margin-top: 1rem; text-align: center;">
-    <button onclick="testConnection()" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568;">
-      <i class="fas fa-database"></i> اختبار الاتصال
-    </button>
+  <div class="tabs">
+    <div class="tab-btn active" onclick="showTab('students')"><i class="fas fa-users"></i> الطلاب</div>
+    <div class="tab-btn" onclick="showTab('levels')"><i class="fas fa-layer-group"></i> المستويات</div>
+    <div class="tab-btn" onclick="showTab('addStudent')"><i class="fas fa-plus"></i> إضافة طالب</div>
+    <div class="tab-btn" onclick="showTab('qrCodes')"><i class="fas fa-qrcode"></i> رموز QR</div>
+  </div>
+  
+  <div id="studentsTab" class="card">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-users"></i> قائمة الطلاب</h3>
+    <div style="overflow-x: auto;">
+      <table><thead><tr><th>الاسم</th><th>العمر</th><th>المستوى</th><th>النقاط</th><th>إجراءات</th></tr></thead>
+        <tbody id="studentsList"><tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div id="levelsTab" class="card hidden">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-layer-group"></i> المستويات والمحتوى</h3>
+    <div id="levelsList">جاري التحميل...</div>
+  </div>
+  
+  <div id="addStudentTab" class="card hidden">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-plus"></i> إضافة طالب جديد</h3>
+    <div id="addStudentMessage" class="message hidden"></div>
+    <input type="text" id="studentName" placeholder="اسم الطالب">
+    <input type="number" id="studentAge" placeholder="العمر">
+    <select id="studentLevel"></select>
+    <button onclick="addStudent()"><i class="fas fa-save"></i> حفظ الطالب</button>
+  </div>
+  
+  <div id="qrCodesTab" class="card hidden">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-qrcode"></i> رموز QR للطلاب</h3>
+    <div id="qrCodesList">جاري التحميل...</div>
   </div>
 </div>
 
 <script>
   const SUPABASE_URL = 'https://tdmpkewggmtrjgtaqpiv.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkbXBrZXdnZ210cmpndGFxcGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NjE4NDUsImV4cCI6MjA5MTUzNzg0NX0.FYOC74kWTORjxSktZdAotnE50_9BkorwphAtkew-38Q';
-  
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  function showError(msg) {
-    const el = document.getElementById('errorMsg');
-    el.textContent = msg;
-    el.style.display = 'block';
-    document.getElementById('successMsg').style.display = 'none';
-  }
-
-  function showSuccess(msg) {
-    const el = document.getElementById('successMsg');
-    el.textContent = msg;
-    el.style.display = 'block';
-    document.getElementById('errorMsg').style.display = 'none';
-  }
-
-  function fillCredentials(email, password) {
-    document.getElementById('email').value = email;
-    document.getElementById('password').value = password;
-    showSuccess(`✅ تم تعبئة البيانات: ${email} / ${password}`);
-  }
+  
+  let currentUser = null;
+  let students = [], levels = [];
 
   async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('loginError');
     
     if (!email || !password) {
-      showError('❌ الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+      errorEl.textContent = 'الرجاء إدخال البريد الإلكتروني وكلمة المرور';
+      errorEl.classList.remove('hidden');
       return;
     }
     
-    document.getElementById('loadingMsg').style.display = 'block';
-    showError('');
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          showError('❌ بيانات الدخول غير صحيحة. جرب كلمة مرور مختلفة أو أنشئ مستخدم جديد');
-        } else if (error.message.includes('Email not confirmed')) {
-          showError('❌ البريد الإلكتروني غير مفعل. اذهب إلى Supabase وفعّل المستخدم');
-        } else {
-          showError('❌ ' + error.message);
-        }
-        return;
-      }
-      
-      if (data.user) {
-        showSuccess('✅ تم تسجيل الدخول بنجاح! جاري تحويلك...');
-        
-        // إنشاء البروفايل إذا لم يكن موجوداً
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            full_name: email.split('@')[0],
-            role: 'admin'
-          });
-        }
-        
-        // الانتقال للوحة التحكم
-        setTimeout(() => {
-          window.location.href = '?logged_in=true&user=' + email;
-        }, 1000);
-      }
-    } catch (err) {
-      showError('❌ حدث خطأ: ' + err.message);
-    } finally {
-      document.getElementById('loadingMsg').style.display = 'none';
-    }
-  }
-
-  async function testConnection() {
-    try {
-      const { data, error } = await supabase.from('students').select('count');
       if (error) throw error;
-      showSuccess('✅ الاتصال بقاعدة البيانات ناجح!');
+      
+      currentUser = data.user;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboardScreen').classList.remove('hidden');
+      
+      await loadUserProfile();
+      await loadData();
     } catch (err) {
-      showError('❌ فشل الاتصال: ' + err.message);
+      errorEl.textContent = 'خطأ: ' + err.message;
+      errorEl.classList.remove('hidden');
     }
   }
 
-  function showCreateUserGuide() {
-    alert(`
-      لإنشاء مستخدم جديد في Supabase:
-      
-      1. اذهب إلى: https://supabase.com/dashboard/project/tdmpkewggmtrjgtaqpiv
-      2. اختر Authentication → Users
-      3. اضغط "Add user" → "Create new user"
-      4. استخدم بريد إلكتروني مختلف عن الموجود
-      5. كلمة المرور: 123456
-      6. فعّل "Auto Confirm User"
-      
-      بعدها ارجع وجرب الدخول بالبريد الجديد!
-    `);
+  async function loadUserProfile() {
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+      document.getElementById('userName').textContent = data?.full_name || currentUser.email;
+    } catch (err) {
+      console.error('خطأ في تحميل البروفايل:', err);
+    }
   }
 
-  // تجربة تلقائية للاتصال
-  window.addEventListener('load', () => {
-    testConnection();
+  async function loadData() {
+    try {
+      const [studentsRes, levelsRes] = await Promise.all([
+        supabase.from('students').select('*').order('id', { ascending: false }),
+        supabase.from('levels').select('*')
+      ]);
+      
+      students = studentsRes.data || [];
+      levels = levelsRes.data || [];
+      
+      document.getElementById('studentCount').textContent = students.length;
+      document.getElementById('levelCount').textContent = levels.length;
+      
+      if (students.length > 0) {
+        const top = students.reduce((a, b) => (a.points || 0) > (b.points || 0) ? a : b);
+        document.getElementById('topStudent').textContent = top.name;
+      }
+      
+      renderStudents();
+      renderLevels();
+      renderQRCodes();
+      fillLevelSelect();
+    } catch (err) {
+      console.error('خطأ في تحميل البيانات:', err);
+    }
+  }
+
+  function renderStudents() {
+    const html = students.map(s => {
+      const level = levels.find(l => l.id === s.level_id);
+      return `<tr>
+        <td>${s.name}</td>
+        <td>${s.age || '-'}</td>
+        <td><span class="badge">${level?.name || 'عام'}</span></td>
+        <td>${s.points || 0}</td>
+        <td>
+          <button onclick="deleteStudent(${s.id})" style="padding:4px 8px; background:#ef4444;"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('studentsList').innerHTML = html || '<tr><td colspan="5" style="text-align:center;">لا يوجد طلاب</td></tr>';
+  }
+
+  function renderLevels() {
+    const html = levels.map(l => `
+      <div style="background:#0f172a; padding:1rem; border-radius:12px; margin-bottom:1rem;">
+        <h4>${l.name}</h4>
+        <p>المنهج: ${l.curriculum || 'غير محدد'}</p>
+        <p>المحتوى: ${l.content_url ? `<a href="${l.content_url}" target="_blank" style="color:#3b82f6;">عرض المحتوى</a>` : 'غير متوفر'}</p>
+        <p>عدد الطلاب: ${students.filter(s => s.level_id === l.id).length}</p>
+      </div>
+    `).join('');
+    document.getElementById('levelsList').innerHTML = html || '<p>لا توجد مستويات</p>';
+  }
+
+  function renderQRCodes() {
+    const html = students.map(s => `
+      <div style="background:#0f172a; padding:1rem; border-radius:12px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div><strong>${s.name}</strong><br><small>رمز: ${s.qr_token || 'غير متوفر'}</small></div>
+        <button onclick="generateQR('${s.qr_token}', '${s.name}')"><i class="fas fa-qrcode"></i> عرض</button>
+      </div>
+    `).join('');
+    document.getElementById('qrCodesList').innerHTML = html || '<p>لا يوجد طلاب</p>';
+  }
+
+  window.generateQR = (token, name) => {
+    const url = `https://marwan909.github.io/Academy-?student=${token}`;
+    alert(`رابط متابعة ${name}:\n${url}\n\nاستخدم أي موقع لتوليد QR Code من هذا الرابط`);
+  };
+
+  function fillLevelSelect() {
+    const select = document.getElementById('studentLevel');
+    select.innerHTML = '<option value="">اختر المستوى</option>' + 
+      levels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  }
+
+  async function addStudent() {
+    const name = document.getElementById('studentName').value;
+    const age = document.getElementById('studentAge').value;
+    const level_id = document.getElementById('studentLevel').value;
+    const msgEl = document.getElementById('addStudentMessage');
+    
+    if (!name) {
+      msgEl.textContent = 'الرجاء إدخال اسم الطالب';
+      msgEl.className = 'message error';
+      msgEl.classList.remove('hidden');
+      return;
+    }
+    
+    try {
+      const qr_token = 'qr_' + Math.random().toString(36) + Date.now().toString(36);
+      const { error } = await supabase.from('students').insert([{
+        name, age: parseInt(age) || null,
+        level_id: parseInt(level_id) || null,
+        qr_token, points: 0
+      }]);
+      
+      if (error) throw error;
+      
+      msgEl.textContent = '✅ تم إضافة الطالب بنجاح!';
+      msgEl.className = 'message success';
+      msgEl.classList.remove('hidden');
+      
+      document.getElementById('studentName').value = '';
+      document.getElementById('studentAge').value = '';
+      await loadData();
+      
+      setTimeout(() => msgEl.classList.add('hidden'), 3000);
+    } catch (err) {
+      msgEl.textContent = 'خطأ: ' + err.message;
+      msgEl.className = 'message error';
+      msgEl.classList.remove('hidden');
+    }
+  }
+
+  async function deleteStudent(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطالب؟')) return;
+    
+    try {
+      await supabase.from('students').delete().eq('id', id);
+      await loadData();
+    } catch (err) {
+      alert('خطأ: ' + err.message);
+    }
+  }
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.getElementById('studentsTab').classList.add('hidden');
+    document.getElementById('levelsTab').classList.add('hidden');
+    document.getElementById('addStudentTab').classList.add('hidden');
+    document.getElementById('qrCodesTab').classList.add('hidden');
+    
+    document.getElementById(tab + 'Tab').classList.remove('hidden');
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    location.reload();
+  }
+
+  window.addEventListener('load', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboardScreen').classList.remove('hidden');
+      await loadUserProfile();
+      await loadData();
+    }
   });
 </script>
 </body>
