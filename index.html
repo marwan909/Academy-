@@ -2,355 +2,323 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Technova Academy | اختبار الاتصال</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Technova Academy | STEM Management</title>
+  <!-- الخطوط والأيقونات -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- المكتبات: Chart.js, jsPDF, html2canvas, XLSX, QRCode, Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* ========== نفس تصميمك الأصلي الجميل ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-    body { background: #0f172a; min-height: 100vh; color: #f8fafc; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    
-    .status-card { background: #1e293b; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #334155; }
-    .status-title { font-size: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
-    .status-badge { padding: 4px 12px; border-radius: 30px; font-size: 0.9rem; }
-    .success { background: #10b981; color: white; }
-    .error { background: #ef4444; color: white; }
-    .warning { background: #f59e0b; color: white; }
-    .loading { background: #3b82f6; color: white; }
-    
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: #1e293b; border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid #334155; }
-    .stat-card i { font-size: 2rem; color: #3b82f6; margin-bottom: 10px; }
-    
-    .card { background: #1e293b; border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #334155; }
-    h3 { margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
-    
+    :root {
+      --bg-primary: #f8fafc; --bg-secondary: #ffffff; --text-primary: #0f172a;
+      --sidebar-bg: #ffffff; --border-light: #e2e8f0; --card-bg: #ffffff;
+      --primary: #3b82f6; --primary-glow: #3b82f640;
+    }
+    .dark-mode {
+      --bg-primary: #0f172a; --bg-secondary: #1e293b; --text-primary: #f8fafc;
+      --sidebar-bg: #0f172a; --border-light: #334155; --card-bg: #1e293b;
+    }
+    body {
+      background: var(--bg-primary); color: var(--text-primary); display: flex; min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    .sidebar {
+      width: 280px; background: var(--sidebar-bg); border-left: 1px solid var(--border-light);
+      padding: 1.5rem 1rem; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+    }
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; padding: 0.5rem; }
+      .nav-menu { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .nav-item { padding: 8px 12px; }
+    }
+    .main-content { flex: 1; padding: 1.5rem; overflow-y: auto; }
+    .glass-card {
+      background: var(--card-bg); border-radius: 24px; padding: 1.5rem;
+      border: 1px solid var(--border-light); margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; }
+    .btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-primary); padding: 8px 16px; border-radius: 40px; cursor: pointer; }
+    input, select, textarea {
+      background: var(--bg-primary); border: 1px solid var(--border-light); padding: 12px;
+      border-radius: 16px; color: var(--text-primary); width: 100%; margin-bottom: 10px;
+    }
+    .badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.8rem; display: inline-block; }
+    .login-container {
+      max-width: 400px; margin: 10vh auto; padding: 2rem; background: var(--card-bg);
+      border-radius: 32px; border: 1px solid var(--border-light);
+    }
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000b0;
+      display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px);
+    }
+    .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
-    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
-    
-    button { padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin: 5px; }
-    button.danger { background: #ef4444; }
-    button.success { background: #10b981; }
-    
-    input, select { padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: white; width: 100%; margin-bottom: 10px; }
-    
-    .log-box { background: #0f172a; padding: 1rem; border-radius: 12px; font-family: monospace; font-size: 0.9rem; max-height: 300px; overflow: auto; white-space: pre-wrap; }
-    .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border-light); }
+    .btn-sm { padding: 4px 8px; font-size: 0.8rem; margin: 0 4px; }
   </style>
 </head>
-<body>
+<body class="light-mode">
 
-<div class="container">
-  <!-- حالة الاتصال -->
-  <div class="status-card">
-    <div class="status-title">
-      <i class="fas fa-database"></i>
-      <span>حالة الاتصال بقاعدة البيانات</span>
-      <span id="connectionStatus" class="status-badge loading">جاري الفحص...</span>
-    </div>
-    <div class="flex-row">
-      <button onclick="checkConnection()"><i class="fas fa-sync-alt"></i> إعادة الفحص</button>
-      <button onclick="testRead()" class="success"><i class="fas fa-book"></i> اختبار قراءة البيانات</button>
-      <button onclick="testWrite()" class="warning"><i class="fas fa-pen"></i> اختبار كتابة البيانات</button>
-    </div>
-    <div id="connectionLog" class="log-box" style="margin-top: 1rem;">اضغط على أزرار الاختبار...</div>
+<!-- شاشة تسجيل الدخول -->
+<div id="authScreen" class="login-container">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <i class="fas fa-cube" style="font-size: 3rem; color: var(--primary);"></i>
+    <h2 style="margin-top: 1rem;">Technova Academy</h2>
+    <p>نظام إدارة STEM المتكامل</p>
   </div>
-  
-  <!-- إحصائيات -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <i class="fas fa-users"></i>
-      <h3 id="studentCount">-</h3>
-      <p>الطلاب</p>
+  <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" value="admin@technova.com">
+  <input type="password" id="loginPassword" placeholder="كلمة المرور" value="123456">
+  <button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="handleLogin()">تسجيل الدخول</button>
+  <p style="margin-top: 1rem; font-size: 0.8rem; text-align: center;">
+    <i class="fas fa-qrcode"></i> أو <a href="#" onclick="showParentQRLogin(); return false;">دخول ولي الأمر بـ QR</a>
+  </p>
+</div>
+
+<!-- الواجهة الرئيسية -->
+<div id="mainAppInterface" style="display: none; width: 100%;">
+  <div class="sidebar">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+      <i class="fas fa-cube" style="font-size: 2.5rem; color: var(--primary);"></i>
+      <div><h2>Technova</h2><small>STEM Horizon</small></div>
     </div>
-    <div class="stat-card">
-      <i class="fas fa-layer-group"></i>
-      <h3 id="levelCount">-</h3>
-      <p>المستويات</p>
+    <div class="nav-menu">
+      <button class="nav-item active" data-view="dashboard"><i class="fas fa-th-large"></i> <span>لوحة التحكم</span></button>
+      <button class="nav-item" data-view="students"><i class="fas fa-users"></i> <span>الطلاب</span></button>
+      <button class="nav-item" data-view="levels"><i class="fas fa-layer-group"></i> <span>المستويات والمحتوى</span></button>
+      <button class="nav-item" data-view="attendance"><i class="fas fa-calendar-check"></i> <span>الحضور</span></button>
+      <button class="nav-item" data-view="reports"><i class="fas fa-chart-bar"></i> <span>التقارير</span></button>
+      <button class="nav-item" data-view="coaches"><i class="fas fa-chalkboard-user"></i> <span>المدربين</span></button>
+      <button class="nav-item" data-view="leaderboard"><i class="fas fa-trophy"></i> <span>المتصدرين</span></button>
     </div>
-    <div class="stat-card">
-      <i class="fas fa-check-circle"></i>
-      <h3 id="tableStatus">-</h3>
-      <p>حالة الجداول</p>
-    </div>
-  </div>
-  
-  <!-- إضافة طالب -->
-  <div class="card">
-    <h3><i class="fas fa-plus"></i> إضافة طالب (اختبار الكتابة)</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-      <input type="text" id="studentName" placeholder="اسم الطالب" value="طالب تجريبي">
-      <input type="number" id="studentAge" placeholder="العمر" value="12">
-      <select id="studentLevel"></select>
-      <button onclick="addTestStudent()"><i class="fas fa-save"></i> حفظ</button>
+    <div style="margin-top: auto;">
+      <button onclick="toggleDarkMode()" class="btn-outline" style="width:100%; margin-bottom:10px;"><i class="fas fa-moon"></i> تغيير المظهر</button>
+      <button onclick="logout()" class="btn-outline" style="width:100%;"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</button>
     </div>
   </div>
-  
-  <!-- قائمة الطلاب -->
-  <div class="card">
-    <h3><i class="fas fa-list"></i> الطلاب الموجودين في قاعدة البيانات</h3>
-    <button onclick="loadStudents()" style="margin-bottom: 1rem;"><i class="fas fa-refresh"></i> تحديث القائمة</button>
-    <div style="overflow-x: auto;">
-      <table><thead><tr><th>الاسم</th><th>العمر</th><th>المستوى</th><th>النقاط</th><th>QR Token</th></tr></thead>
-        <tbody id="studentsList"><tr><td colspan="5" style="text-align:center;">اضغط "تحديث القائمة"</td></tr></tbody>
-      </table>
+
+  <div class="main-content">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+      <h2 id="viewTitle">لوحة التحكم</h2>
+      <div><span id="userRoleBadge" style="background: var(--primary); padding: 4px 16px; border-radius: 40px;">أدمن</span></div>
     </div>
+    <div id="dynamicContent">جاري تحميل النظام...</div>
   </div>
-  
-  <!-- سجل الأخطاء التفصيلي -->
-  <div class="card">
-    <h3><i class="fas fa-terminal"></i> سجل العمليات</h3>
-    <div id="fullLog" class="log-box">في انتظار العمليات...</div>
-    <button onclick="clearLog()" style="margin-top: 1rem;">مسح السجل</button>
+</div>
+
+<!-- Modal QR -->
+<div id="qrModal" class="modal" style="display: none;">
+  <div class="glass-card" style="max-width: 400px; text-align: center;">
+    <h3>مسح QR للدخول</h3>
+    <div style="background: white; padding: 1rem; border-radius: 16px;">
+      <i class="fas fa-camera" style="font-size: 3rem; color: #000;"></i>
+      <p style="color: #000;">في النسخة النهائية، هنا كاميرا لمسح الكود</p>
+      <input placeholder="أو ادخل الكود يدويا" id="manualQRInput" style="margin-top: 10px; background: #fff; color: #000;">
+      <button class="btn-primary" onclick="loginWithToken()">دخول</button>
+    </div>
+    <button onclick="document.getElementById('qrModal').style.display='none'" class="btn-outline" style="margin-top: 10px;">إغلاق</button>
   </div>
 </div>
 
 <script>
+  // ========== إعدادات Supabase ==========
   const SUPABASE_URL = 'https://tdmpkewggmtrjgtaqpiv.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkbXBrZXdnZ210cmpndGFxcGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NjE4NDUsImV4cCI6MjA5MTUzNzg0NX0.FYOC74kWTORjxSktZdAotnE50_9BkorwphAtkew-38Q';
-  
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  let logMessages = [];
 
-  // إضافة رسالة للسجل
-  function addLog(message, type = 'info') {
-    const timestamp = new Date().toLocaleTimeString('ar-EG');
-    const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
-    const logEntry = `[${timestamp}] ${prefix} ${message}`;
-    logMessages.push(logEntry);
-    
-    // عرض في سجل الاتصال
-    document.getElementById('connectionLog').textContent = logMessages.slice(-5).join('\n');
-    
-    // عرض في السجل الكامل
-    document.getElementById('fullLog').textContent = logMessages.join('\n');
-  }
+  let currentUser = null;
+  let userProfile = null;
+  let appState = { students: [], levels: [], coaches: [] };
 
-  // مسح السجل
-  function clearLog() {
-    logMessages = [];
-    document.getElementById('connectionLog').textContent = 'تم مسح السجل';
-    document.getElementById('fullLog').textContent = 'تم مسح السجل';
-  }
-
-  // فحص الاتصال
-  async function checkConnection() {
-    addLog('بدء فحص الاتصال...');
-    document.getElementById('connectionStatus').className = 'status-badge loading';
-    document.getElementById('connectionStatus').textContent = 'جاري الفحص...';
-    
+  // ========== دوال المصادقة ==========
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     try {
-      // فحص الاتصال الأساسي
-      const { data: healthData, error: healthError } = await supabase.from('levels').select('count', { count: 'exact', head: true });
-      
-      if (healthError) {
-        addLog(`فشل الاتصال: ${healthError.message}`, 'error');
-        document.getElementById('connectionStatus').className = 'status-badge error';
-        document.getElementById('connectionStatus').textContent = 'فشل الاتصال';
-        document.getElementById('tableStatus').textContent = 'خطأ';
-        return;
-      }
-      
-      addLog('✅ الاتصال بقاعدة البيانات ناجح!', 'success');
-      document.getElementById('connectionStatus').className = 'status-badge success';
-      document.getElementById('connectionStatus').textContent = 'متصل';
-      
-      // فحص الجداول
-      const tables = ['students', 'levels', 'profiles'];
-      let workingTables = 0;
-      
-      for (const table of tables) {
-        const { error } = await supabase.from(table).select('count', { count: 'exact', head: true });
-        if (!error) {
-          workingTables++;
-          addLog(`✅ جدول ${table} موجود`, 'success');
-        } else {
-          addLog(`❌ جدول ${table}: ${error.message}`, 'error');
-        }
-      }
-      
-      document.getElementById('tableStatus').textContent = `${workingTables}/${tables.length}`;
-      
-      // تحميل الإحصائيات
-      await loadStats();
-      await loadLevelsForSelect();
-      
-    } catch (err) {
-      addLog(`خطأ غير متوقع: ${err.message}`, 'error');
-      document.getElementById('connectionStatus').className = 'status-badge error';
-      document.getElementById('connectionStatus').textContent = 'خطأ';
-    }
-  }
-
-  // تحميل الإحصائيات
-  async function loadStats() {
-    try {
-      const [studentsRes, levelsRes] = await Promise.all([
-        supabase.from('students').select('*', { count: 'exact', head: true }),
-        supabase.from('levels').select('*', { count: 'exact', head: true })
-      ]);
-      
-      document.getElementById('studentCount').textContent = studentsRes.count || 0;
-      document.getElementById('levelCount').textContent = levelsRes.count || 0;
-      addLog(`تم تحميل الإحصائيات: ${studentsRes.count} طالب، ${levelsRes.count} مستوى`, 'success');
-    } catch (err) {
-      addLog(`خطأ في تحميل الإحصائيات: ${err.message}`, 'error');
-    }
-  }
-
-  // تحميل المستويات للقائمة المنسدلة
-  async function loadLevelsForSelect() {
-    try {
-      const { data, error } = await supabase.from('levels').select('*');
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      
-      const select = document.getElementById('studentLevel');
-      select.innerHTML = '<option value="">اختر المستوى</option>' + 
-        (data || []).map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-      
-      addLog(`تم تحميل ${data.length} مستوى للقائمة`, 'success');
+      await loadUserProfile(data.user);
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('mainAppInterface').style.display = 'flex';
+      await fetchInitialData();
+      renderView('dashboard');
     } catch (err) {
-      addLog(`خطأ في تحميل المستويات: ${err.message}`, 'error');
+      alert('خطأ في الدخول: ' + err.message);
     }
   }
 
-  // تحميل الطلاب
-  async function loadStudents() {
-    addLog('جاري تحميل قائمة الطلاب...');
-    
-    try {
-      const { data, error } = await supabase.from('students').select('*');
-      
-      if (error) {
-        addLog(`خطأ في تحميل الطلاب: ${error.message}`, 'error');
-        document.getElementById('studentsList').innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ef4444;">خطأ: ${error.message}</td></tr>`;
-        return;
-      }
-      
-      if (!data || data.length === 0) {
-        document.getElementById('studentsList').innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد طلاب في قاعدة البيانات</td></tr>';
-        addLog('لا يوجد طلاب مسجلين', 'info');
-        return;
-      }
-      
-      // تحميل المستويات عشان نعرف اسم المستوى
-      const { data: levels } = await supabase.from('levels').select('*');
-      
-      const html = data.map(s => {
-        const level = levels?.find(l => l.id === s.level_id);
-        return `<tr>
-          <td>${s.name}</td>
-          <td>${s.age || '-'}</td>
-          <td><span class="badge">${level?.name || 'بدون مستوى'}</span></td>
-          <td>${s.points || 0}</td>
-          <td style="font-family: monospace; font-size: 0.7rem;">${s.qr_token || '-'}</td>
-        </tr>`;
-      }).join('');
-      
-      document.getElementById('studentsList').innerHTML = html;
-      document.getElementById('studentCount').textContent = data.length;
-      addLog(`✅ تم تحميل ${data.length} طالب`, 'success');
-      
-    } catch (err) {
-      addLog(`خطأ: ${err.message}`, 'error');
+  async function loadUserProfile(user) {
+    currentUser = user;
+    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (!data) {
+      await supabase.from('profiles').insert({ id: user.id, full_name: user.email, role: 'admin' });
+      userProfile = { role: 'admin' };
+    } else {
+      userProfile = data;
+    }
+    document.getElementById('userRoleBadge').innerText = userProfile.role === 'admin' ? 'مدير النظام' : userProfile.role;
+  }
+
+  async function logout() { await supabase.auth.signOut(); location.reload(); }
+
+  // ========== جلب البيانات ==========
+  async function fetchInitialData() {
+    const [studentsRes, levelsRes, coachesRes] = await Promise.all([
+      supabase.from('students').select('*'),
+      supabase.from('levels').select('*'),
+      supabase.from('profiles').select('*').eq('role', 'coach')
+    ]);
+    appState.students = studentsRes.data || [];
+    appState.levels = levelsRes.data || [];
+    appState.coaches = coachesRes.data || [];
+  }
+
+  // ========== عرض الصفحات ==========
+  async function renderView(viewId) {
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-view="${viewId}"]`)?.classList.add('active');
+    document.getElementById('viewTitle').innerText = document.querySelector(`[data-view="${viewId}"] span`)?.innerText || 'لوحة التحكم';
+    await fetchInitialData();
+    const container = document.getElementById('dynamicContent');
+    switch(viewId) {
+      case 'dashboard': container.innerHTML = renderDashboard(); break;
+      case 'students': container.innerHTML = await renderStudentsView(); break;
+      case 'levels': container.innerHTML = await renderLevelsView(); break;
+      case 'leaderboard': container.innerHTML = renderLeaderboard(); break;
+      default: container.innerHTML = `<div class="glass-card"><h3>قيد التطوير</h3></div>`;
     }
   }
 
-  // اختبار القراءة
-  async function testRead() {
-    addLog('اختبار قراءة البيانات...');
-    
-    try {
-      const { data, error } = await supabase.from('levels').select('*');
-      
-      if (error) {
-        addLog(`❌ فشل القراءة: ${error.message}`, 'error');
-      } else {
-        addLog(`✅ نجحت القراءة! تم جلب ${data.length} مستوى: ${data.map(l => l.name).join(', ')}`, 'success');
-      }
-    } catch (err) {
-      addLog(`خطأ: ${err.message}`, 'error');
-    }
+  function renderDashboard() {
+    return `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="glass-card"><i class="fas fa-user-graduate fa-2x" style="color: var(--primary);"></i><h3>${appState.students.length}</h3><p>إجمالي الطلاب</p></div>
+        <div class="glass-card"><i class="fas fa-layer-group fa-2x"></i><h3>${appState.levels.length}</h3><p>المستويات</p></div>
+        <div class="glass-card"><i class="fas fa-chalkboard-user fa-2x"></i><h3>${appState.coaches.length}</h3><p>مدربين</p></div>
+      </div>
+    `;
   }
 
-  // اختبار الكتابة
-  async function testWrite() {
-    addLog('اختبار كتابة البيانات...');
-    
-    try {
-      const testData = {
-        name: 'اختبار ' + new Date().toLocaleTimeString('ar-EG'),
-        curriculum: 'منهج تجريبي',
-        content_url: 'https://example.com'
-      };
-      
-      const { data, error } = await supabase.from('levels').insert([testData]).select();
-      
-      if (error) {
-        addLog(`❌ فشل الكتابة: ${error.message}`, 'error');
-        
-        if (error.message.includes('row-level security')) {
-          addLog('⚠️ المشكلة في سياسات RLS - يجب تفعيلها في Supabase', 'error');
-        }
-      } else {
-        addLog(`✅ نجحت الكتابة! تم إضافة: ${data[0].name}`, 'success');
-        await loadLevelsForSelect();
-        await loadStats();
-      }
-    } catch (err) {
-      addLog(`خطأ: ${err.message}`, 'error');
-    }
+  async function renderStudentsView() {
+    let rows = '';
+    appState.students.forEach(s => {
+      rows += `<tr>
+        <td><img src="${s.image_url || 'https://i.pravatar.cc/40'}" style="width:40px;height:40px;border-radius:50%;"></td>
+        <td>${s.name}</td>
+        <td>${s.age || '-'}</td>
+        <td><span class="badge">${appState.levels.find(l=>l.id==s.level_id)?.name || 'بدون مستوى'}</span></td>
+        <td>
+          <button class="btn-outline btn-sm" onclick="generateQRCode('${s.qr_token}', '${s.name}')"><i class="fas fa-qrcode"></i></button>
+          <button class="btn-outline btn-sm" onclick="editStudentPrompt(${s.id})"><i class="fas fa-edit"></i></button>
+        </td>
+      </tr>`;
+    });
+    return `
+      <div class="glass-card">
+        <div style="display:flex; justify-content:space-between;">
+          <h3>قائمة الطلاب</h3>
+          <button class="btn-primary" onclick="showAddStudentForm()"><i class="fas fa-plus"></i> إضافة طالب</button>
+        </div>
+        <div class="table-wrapper"><table><thead><tr><th>صورة</th><th>الاسم</th><th>السن</th><th>المستوى</th><th>إجراءات</th></tr></thead><tbody>${rows}</tbody></table></div>
+      </div>
+      <div class="glass-card" id="addStudentForm" style="display:none;">
+        <h4>إضافة طالب جديد</h4>
+        <input id="newStudentName" placeholder="الاسم الكامل">
+        <input id="newStudentAge" placeholder="السن" type="number">
+        <select id="newStudentLevel">${appState.levels.map(l=>`<option value="${l.id}">${l.name}</option>`)}</select>
+        <button class="btn-primary" onclick="addNewStudent()">حفظ في قاعدة البيانات</button>
+        <button class="btn-outline" onclick="document.getElementById('addStudentForm').style.display='none'">إلغاء</button>
+      </div>
+    `;
   }
 
-  // إضافة طالب تجريبي
-  async function addTestStudent() {
-    const name = document.getElementById('studentName').value;
-    const age = document.getElementById('studentAge').value;
-    const level_id = document.getElementById('studentLevel').value;
-    
-    if (!name) {
-      addLog('الرجاء إدخال اسم الطالب', 'error');
-      return;
-    }
-    
-    addLog(`جاري إضافة الطالب: ${name}...`);
-    
-    try {
-      const qr_token = 'qr_' + Math.random().toString(36) + Date.now().toString(36);
-      const { data, error } = await supabase.from('students').insert([{
-        name, 
-        age: parseInt(age) || null,
-        level_id: parseInt(level_id) || null,
-        qr_token, 
-        points: 0
-      }]).select();
-      
-      if (error) {
-        addLog(`❌ فشل الإضافة: ${error.message}`, 'error');
-        
-        if (error.message.includes('row-level security')) {
-          addLog('⚠️ المشكلة في RLS - نفذ كود SQL اللي شرحته', 'error');
-        }
-      } else {
-        addLog(`✅ تم إضافة الطالب "${data[0].name}" بنجاح!`, 'success');
-        document.getElementById('studentName').value = '';
-        document.getElementById('studentAge').value = '';
-        await loadStudents();
-        await loadStats();
-      }
-    } catch (err) {
-      addLog(`خطأ: ${err.message}`, 'error');
-    }
+  async function renderLevelsView() {
+    let cards = '';
+    appState.levels.forEach(l => {
+      cards += `<div class="glass-card">
+        <h4>${l.name}</h4>
+        <p>المنهج: ${l.curriculum || 'غير محدد'}</p>
+        <p>رابط المحتوى: ${l.content_url ? `<a href="${l.content_url}" target="_blank">عرض المحتوى التعليمي</a>` : 'لا يوجد'}</p>
+        <button class="btn-outline" onclick="editLevelContent(${l.id})">تعديل المحتوى</button>
+      </div>`;
+    });
+    return `
+      <div class="glass-card"><h3>إدارة المستويات والمحتوى</h3><button class="btn-primary" onclick="showAddLevelForm()">إضافة مستوى جديد</button></div>
+      ${cards}
+      <div class="glass-card" id="addLevelForm" style="display:none;">
+        <input id="levelName" placeholder="اسم المستوى"><input id="levelCurriculum" placeholder="وصف المنهج"><input id="levelContentUrl" placeholder="رابط المحتوى">
+        <button class="btn-primary" onclick="addNewLevel()">حفظ المستوى</button><button class="btn-outline" onclick="document.getElementById('addLevelForm').style.display='none'">إلغاء</button>
+      </div>
+    `;
   }
 
-  // بدء التشغيل
-  window.addEventListener('load', () => {
-    addLog('🚀 تم تحميل صفحة اختبار الاتصال');
-    addLog(`📡 Supabase URL: ${SUPABASE_URL}`);
-    checkConnection();
+  function renderLeaderboard() {
+    let sorted = [...appState.students].sort((a,b) => (b.points||0) - (a.points||0));
+    return `<div class="glass-card"><h3>🏆 المتصدرين</h3><ol>${sorted.map(s=>`<li>${s.name} - ${s.points||0} نقطة</li>`).join('')}</ol></div>`;
+  }
+
+  // ========== عمليات قاعدة البيانات ==========
+  async function addNewStudent() {
+    const name = document.getElementById('newStudentName').value;
+    const age = document.getElementById('newStudentAge').value;
+    const level_id = document.getElementById('newStudentLevel').value;
+    if (!name) return alert('الاسم مطلوب');
+    const qr_token = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    const { error } = await supabase.from('students').insert([{ name, age: parseInt(age)||null, level_id: parseInt(level_id)||null, qr_token }]);
+    if (error) alert(error.message);
+    else { alert('تم إضافة الطالب'); document.getElementById('addStudentForm').style.display='none'; renderView('students'); }
+  }
+
+  async function addNewLevel() {
+    const name = document.getElementById('levelName').value;
+    const curriculum = document.getElementById('levelCurriculum').value;
+    const content_url = document.getElementById('levelContentUrl').value;
+    if (!name) return alert('الاسم مطلوب');
+    const { error } = await supabase.from('levels').insert([{ name, curriculum, content_url }]);
+    if (!error) { alert('تمت الإضافة'); renderView('levels'); } else alert(error.message);
+  }
+
+  // ========== QR Code ==========
+  window.generateQRCode = (token, name) => {
+    // تم تعديل الرابط ليطابق اسم المستودع الخاص بك
+    const url = `https://marwan909.github.io/Academy-/?qr_token=${token}`;
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'modal';
+    qrDiv.innerHTML = `<div class="glass-card" style="text-align:center;"><h4>كود الدخول لـ ${name}</h4><div id="qrcodeCanvas" style="display:flex; justify-content:center;"></div><p>امسح الكود لمتابعة ابنك</p><button class="btn-primary" onclick="this.parentElement.parentElement.remove()">إغلاق</button></div>`;
+    document.body.appendChild(qrDiv);
+    new QRCode(document.getElementById("qrcodeCanvas"), { text: url, width: 200, height: 200 });
+  };
+
+  // ========== دوال مساعدة ==========
+  window.showParentQRLogin = () => document.getElementById('qrModal').style.display = 'flex';
+  window.loginWithToken = () => alert('سيتم تطوير الدخول برمز QR قريباً');
+  window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+  window.showAddStudentForm = () => document.getElementById('addStudentForm').style.display='block';
+  window.showAddLevelForm = () => document.getElementById('addLevelForm').style.display='block';
+  window.editStudentPrompt = (id) => { const newName = prompt('الاسم الجديد'); if(newName) supabase.from('students').update({name:newName}).eq('id',id).then(()=>renderView('students')); };
+  window.editLevelContent = (id) => { const newUrl = prompt('رابط المحتوى الجديد'); if(newUrl) supabase.from('levels').update({content_url:newUrl}).eq('id',id).then(()=>renderView('levels')); };
+
+  // ========== ربط الأحداث ==========
+  document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', (e) => renderView(btn.dataset.view)));
+  window.addEventListener('load', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('mainAppInterface').style.display = 'flex';
+      await loadUserProfile(currentUser);
+      await fetchInitialData();
+      renderView('dashboard');
+    }
   });
 </script>
 </body>
