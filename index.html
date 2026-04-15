@@ -4,17 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Technova Academy – نظام إدارة STEM متكامل</title>
-  <!-- Google Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* نفس الـ CSS السابق، محذوف للاختصار ولكن سيتم تضمينه كاملاً في الملف النهائي */
+    /* نفس الـ CSS السابق (محذوف للاختصار، سيتم تضمينه كاملاً في الملف النهائي) */
     :root { --bg:#080c14; --bg2:#0d1420; --bg3:#111927; --card:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.08); --cyan:#00d4ff; --cyan2:#00aacc; --green:#00ff88; --orange:#ff8c00; --red:#ff4466; --yellow:#ffd700; --purple:#a855f7; --text:#e8edf5; --text2:#8899aa; --text3:#556677; --sw:240px; --r:14px; }
     body.light { --bg:#f0f4f8; --bg2:#ffffff; --bg3:#e8eef4; --card:rgba(0,0,0,0.03); --border:rgba(0,0,0,0.08); --cyan:#0077cc; --cyan2:#005fa3; --green:#00aa55; --orange:#dd6600; --red:#cc2244; --yellow:#cc9900; --purple:#7c3aed; --text:#0f172a; --text2:#475569; --text3:#94a3b8; }
     *{margin:0;padding:0;box-sizing:border-box;} body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;} ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
@@ -43,7 +41,7 @@
     </div>
     <div id="tab-admin">
       <input class="li" type="email" id="le" placeholder="البريد الإلكتروني" value="admin@technova.com">
-      <input class="li" type="password" id="lp" placeholder="كلمة المرور" value="123456">
+      <input class="li" type="password" id="lp" placeholder="كلمة المرور" value="Admin@123">
       <button class="login-btn" onclick="handleLogin()">دخول النظام</button>
       <div class="login-err" id="lerr"></div>
     </div>
@@ -97,7 +95,6 @@
 
 <script>
 // ==================== SUPABASE CONFIG ====================
-// تم استبدال القيم القديمة بالقيم الجديدة التي قدمتها
 const SUPA_URL = 'https://mmumlfcmzehlsgpjkgui.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdW1sZmNtemVobHNncGprZ3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTcxOTEsImV4cCI6MjA5MTgzMzE5MX0.s48FL7V-5gCmzj_TtJaUY_yGlUJ-LFhAfF1XHiK1MxA';
 let supa = null;
@@ -137,11 +134,50 @@ function aiTips(student) {
   return tips;
 }
 
-// ==================== SYNC WITH SUPABASE ====================
+// إنشاء مستخدم admin تلقائياً إذا لم يكن موجوداً
+async function ensureAdminUser() {
+  if (!supa) return;
+  const { data: users } = await supa.auth.admin.listUsers();
+  const adminExists = users?.users?.some(u => u.email === 'admin@technova.com');
+  if (!adminExists) {
+    await supa.auth.admin.createUser({
+      email: 'admin@technova.com',
+      password: 'Admin@123',
+      email_confirm: true,
+      user_metadata: { role: 'admin', name: 'مدير النظام' }
+    });
+    console.log('تم إنشاء مستخدم admin بنجاح');
+  }
+}
+
+// توليد تنبيهات ديناميكية
+function generateAlerts() {
+  const alerts = [];
+  DB.students.forEach(s => {
+    const rate = attRate(s.att);
+    if (rate < 60) alerts.push({ type: 'warning', msg: `${s.name} – حضور ${rate}% (غياب متكرر)`, time: 'الآن' });
+    const codingAvg = parseFloat(avg(s.sessions, 'coding'));
+    if (codingAvg < 3 && s.sessions.length > 0) alerts.push({ type: 'alert', msg: `${s.name} – مستوى Coding ضعيف (${codingAvg}/5)`, time: 'الآن' });
+    if (s.pts > 400) alerts.push({ type: 'info', msg: `${s.name} – حصل على ${s.pts} نقطة! 🎉`, time: 'الآن' });
+  });
+  DB.notifs = alerts.slice(0, 5);
+  // تحديث لوحة الإشعارات إذا كانت مفتوحة
+  const nlist = document.getElementById('nlist');
+  if (nlist && document.getElementById('notif-panel').style.display !== 'none') {
+    nlist.innerHTML = DB.notifs.map(n => `<div class="ni2 ${n.type}"><div class="nd2"></div><div><div style="font-size:12px;font-weight:600;">${n.msg}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">${n.time}</div></div></div>`).join('');
+  }
+  // تحديث تنبيهات لوحة التحكم
+  const dashAlerts = document.getElementById('dash-alerts');
+  if (dashAlerts && document.querySelector('.page.on')?.id === 'page-dashboard') {
+    if (alerts.length) dashAlerts.innerHTML = alerts.map(a => `<div class="ni2 ${a.type}" style="margin-bottom:8px;"><div class="nd2"></div><div style="font-size:12px;">${a.msg}</div></div>`).join('');
+    else dashAlerts.innerHTML = `<div class="ni2 info" style="margin-bottom:8px;"><div class="nd2"></div><div style="font-size:12px;">✅ كل الطلاب في حالة جيدة</div></div>`;
+  }
+}
+
+// مزامنة جميع البيانات مع Supabase
 async function syncAllData() {
   if (!supa) return;
   try {
-    // جلب الطلاب
     const { data: studentsData } = await supa.from('students').select('*');
     if (studentsData) {
       DB.students = studentsData.map(s => ({
@@ -158,7 +194,6 @@ async function syncAllData() {
         sessions: [],
         att: Array(5).fill(false)
       }));
-      // جلب الحصص لكل طالب
       for (let student of DB.students) {
         const { data: sessions } = await supa.from('sessions').select('*').eq('student_id', student.id);
         student.sessions = sessions || [];
@@ -168,17 +203,11 @@ async function syncAllData() {
         student.att = attArr;
       }
     }
-    // جلب المستويات
     const { data: levelsData } = await supa.from('levels').select('*');
     if (levelsData) DB.levels = levelsData;
-    // جلب المدربين
     const { data: trainersData } = await supa.from('trainers').select('*');
     if (trainersData) DB.trainers = trainersData;
-    // إشعارات افتراضية (يمكن جلبها من جدول منفصل)
-    DB.notifs = [
-      { id:1, type:"warning", msg:"يوسف كمال – غياب متكرر", time:"منذ ساعة" },
-      { id:2, type:"info", msg:"ليلى حسن – أكملت Level 2", time:"منذ يومين" }
-    ];
+    generateAlerts();
     renderCurrentPage();
   } catch(e) { console.error("Sync error", e); }
 }
@@ -205,13 +234,17 @@ async function handleLogin() {
   if (supa) {
     const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
     if (!error && data.user) {
-      currentUser = { role: 'admin', email: data.user.email, name: data.user.email.split('@')[0] };
+      currentUser = { role: 'admin', email: data.user.email, name: data.user.user_metadata?.name || data.user.email.split('@')[0] };
       await syncAllData();
       showApp();
       return;
+    } else {
+      errDiv.textContent = error?.message || 'بيانات الدخول غير صحيحة';
+      return;
     }
   }
-  if (email && pass.length >= 4) {
+  // Fallback محلي (للتجربة بدون Supabase)
+  if (email === 'admin@technova.com' && pass === 'Admin@123') {
     currentUser = { role: 'admin', email, name: 'مدير النظام' };
     await syncAllData();
     showApp();
@@ -315,13 +348,7 @@ function renderDash() {
   document.getElementById('recent-act').innerHTML = acts.slice(0,4).map(a => `<div style="display:flex;gap:10px;margin-bottom:10px;"><div style="font-size:20px;">${a.em}</div><div><div style="font-size:13px;font-weight:600;">${a.nm}</div><div style="font-size:11px;color:var(--text3);">${a.notes}</div><div style="font-size:10px;color:var(--text3);">${a.date}</div></div></div>`).join('');
   const top3 = [...DB.students].sort((a,b) => b.pts - a.pts).slice(0,3);
   document.getElementById('top-sts').innerHTML = top3.map((s,i) => `<div class="lbr" onclick="goto('profile',${s.id})"><div style="font-size:22px;">${['🥇','🥈','🥉'][i]}</div><div style="font-size:20px;">${s.em}</div><div style="flex:1;"><div style="font-size:13px;font-weight:700;">${s.name}</div><div style="font-size:11px;color:var(--text3);">${lvlName(s.lvlId)}</div></div><div style="font-size:13px;font-weight:700;color:var(--yellow);">⭐ ${s.pts}</div></div>`).join('');
-  let alerts = [];
-  DB.students.forEach(s => {
-    if (attRate(s.att) < 60) alerts.push({ msg: `${s.name} – حضور ${attRate(s.att)}%`, type: 'warning' });
-    if (s.sessions.length && parseFloat(avg(s.sessions,'coding')) < 3) alerts.push({ msg: `${s.name} – Coding ضعيف`, type: 'alert' });
-  });
-  if (!alerts.length) alerts.push({ msg: 'كل الطلاب في حالة جيدة ✅', type: 'info' });
-  document.getElementById('dash-alerts').innerHTML = alerts.map(a => `<div class="ni2 ${a.type}" style="margin-bottom:8px;"><div class="nd2"></div><div style="font-size:12px;">${a.msg}</div></div>`).join('');
+  generateAlerts(); // تحديث التنبيهات
 }
 
 // ==================== STUDENTS ====================
@@ -401,7 +428,6 @@ async function saveSt(eid = null) {
     }
     await syncAllData();
   } else {
-    // Fallback local
     if (eid) {
       const student = DB.students.find(x => x.id === eid);
       if (student) Object.assign(student, data);
@@ -457,7 +483,6 @@ async function saveSes(sid) {
   };
   if (supa) {
     await supa.from('sessions').insert(newSession);
-    // تحديث النقاط
     const newPoints = (student.pts || 0) + 20;
     await supa.from('students').update({ points: newPoints }).eq('id', sid);
     await syncAllData();
@@ -627,64 +652,90 @@ function renderParentDash(studentId) {
     <div class="card"><div style="font-size:14px;font-weight:700;margin-bottom:12px;">📋 آخر الحصص</div>${s.sessions.slice(-2).reverse().map(ses => `<div style="padding:10px;border-radius:8px;background:rgba(255,255,255,.03);margin-bottom:8px;"><div style="font-size:12px;color:var(--text3);margin-bottom:6px;">📅 ${ses.date}</div><div style="display:flex;gap:10px;"><span class="tag" style="color:var(--cyan);">Logic ${ses.logic}/5</span><span class="tag" style="color:var(--green);">Coding ${ses.coding}/5</span></div>${ses.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">💬 ${ses.notes}</div>` : ''}</div>`).join('')}</div>`;
 }
 
-// ==================== PDF REPORT ====================
-function printRep(id) {
+// ==================== PDF REPORT (تحميل PDF حقيقي) ====================
+async function printRep(id) {
   const s = DB.students.find(x => x.id === id);
   if (!s) return;
-  const tips = aiTips(s);
-  const la = avg(s.sessions, 'logic');
-  const ca = avg(s.sessions, 'coding');
-  const cra = avg(s.sessions, 'cre');
-  const r = attRate(s.att);
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>body{font-family:'Cairo',sans-serif;background:#fff;color:#111;padding:40px;max-width:700px;margin:auto;}h1{color:#0077cc;font-size:22px;border-bottom:3px solid #0077cc;padding-bottom:10px;margin-bottom:20px;}h2{color:#333;font-size:15px;margin:20px 0 8px;}table{width:100%;border-collapse:collapse;}td,th{padding:8px 12px;border:1px solid #ddd;font-size:13px;}th{background:#f0f5ff;font-weight:700;}ul{padding-right:20px;}li{margin-bottom:6px;font-size:13px;}.hd{display:flex;gap:20px;align-items:center;margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;}.ft{margin-top:40px;font-size:11px;color:#999;border-top:1px solid #ddd;padding-top:10px;text-align:center;}</style></head><body>
-    <h1>⚡ Technova Academy – تقرير الطالب</h1>
-    <div class="hd"><div style="font-size:52px;">${s.em}</div><div><div style="font-size:20px;font-weight:900;">${s.name}</div><div style="color:#666;">السن: ${s.age} سنة | الليفل: ${lvlName(s.lvlId)}</div><div style="color:#666;">رقم ولي الأمر: ${s.phone}</div></div></div>
-    <h2>📊 المهارات</h2><table><tr><th>المهارة</th><th>المتوسط</th><th>التقييم</th></tr>
-    <tr><td>Logic</td><td>${la}/5</td><td>${parseFloat(la) >= 4 ? 'ممتاز ✅' : 'يحتاج تحسين ⚠️'}</td></tr>
-    <tr><td>Coding</td><td>${ca}/5</td><td>${parseFloat(ca) >= 4 ? 'ممتاز ✅' : 'يحتاج تحسين ⚠️'}</td></tr>
-    <tr><td>Creativity</td><td>${cra}/5</td><td>${parseFloat(cra) >= 4 ? 'ممتاز ✅' : 'يحتاج تحسين ⚠️'}</td></tr>
+  // إنشاء عنصر div مؤقت لعرض التقرير
+  const element = document.createElement('div');
+  element.style.position = 'absolute';
+  element.style.top = '-9999px';
+  element.style.right = '-9999px';
+  element.style.background = 'white';
+  element.style.color = 'black';
+  element.style.padding = '20px';
+  element.style.fontFamily = 'Cairo, sans-serif';
+  element.style.direction = 'rtl';
+  element.style.width = '700px';
+  element.innerHTML = `
+    <h1 style="color:#0077cc;font-size:22px;border-bottom:3px solid #0077cc;padding-bottom:10px;margin-bottom:20px;">⚡ Technova Academy – تقرير الطالب</h1>
+    <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;">
+      <div style="font-size:52px;">${s.em}</div>
+      <div><div style="font-size:20px;font-weight:900;">${s.name}</div><div style="color:#666;">السن: ${s.age} سنة | الليفل: ${lvlName(s.lvlId)}</div><div style="color:#666;">رقم ولي الأمر: ${s.phone}</div></div>
+    </div>
+    <h2 style="color:#333;font-size:15px;margin:20px 0 8px;">📊 المهارات</h2>
+    <table style="width:100%;border-collapse:collapse;"><tr><th style="padding:8px 12px;border:1px solid #ddd;background:#f0f5ff;">المهارة</th><th style="padding:8px 12px;border:1px solid #ddd;background:#f0f5ff;">المتوسط</th><th style="padding:8px 12px;border:1px solid #ddd;background:#f0f5ff;">التقييم</th></tr>
+    <tr><td style="padding:8px 12px;border:1px solid #ddd;">Logic</td><td style="padding:8px 12px;border:1px solid #ddd;">${avg(s.sessions,'logic')}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${parseFloat(avg(s.sessions,'logic'))>=4?'ممتاز ✅':'يحتاج تحسين ⚠️'}</td></tr>
+    <tr><td style="padding:8px 12px;border:1px solid #ddd;">Coding</td><td style="padding:8px 12px;border:1px solid #ddd;">${avg(s.sessions,'coding')}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${parseFloat(avg(s.sessions,'coding'))>=4?'ممتاز ✅':'يحتاج تحسين ⚠️'}</td></tr>
+    <tr><td style="padding:8px 12px;border:1px solid #ddd;">Creativity</td><td style="padding:8px 12px;border:1px solid #ddd;">${avg(s.sessions,'cre')}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${parseFloat(avg(s.sessions,'cre'))>=4?'ممتاز ✅':'يحتاج تحسين ⚠️'}</td></tr>
     </table>
-    <h2>📅 الحضور</h2><p>نسبة الحضور: <strong>${r}%</strong> (${s.att.filter(Boolean).length} من ${s.att.length} حصص)</p>
-    <h2>⭐ النقاط</h2><p>النقاط: <strong>${s.pts}</strong> &nbsp;|&nbsp; الشارات: ${s.badges.join(' ')}</p>
-    <h2>🤖 توصيات AI</h2><ul>${tips.map(t => `<li>${t}</li>`).join('')}</ul>
-    <h2>📋 سجل الحصص</h2></table><th>التاريخ</th><th>Logic</th><th>Coding</th><th>Creativity</th><th>ملاحظات</th></tr>
-    ${s.sessions.map(ses => `<tr><td>${ses.date}</td><td>${ses.logic}/5</td><td>${ses.coding}/5</td><td>${ses.creativity || ses.cre}/5</td><td>${ses.notes}</td></tr>`).join('')}</table>
-    <div class="ft">⚡ Technova Academy | STEM Horizon – ${new Date().toLocaleDateString('ar-EG')}</div>
-    </body></html>`);
-  win.document.close();
-  setTimeout(() => win.print(), 600);
+    <h2 style="color:#333;font-size:15px;margin:20px 0 8px;">📅 الحضور</h2><p>نسبة الحضور: <strong>${attRate(s.att)}%</strong> (${s.att.filter(Boolean).length} من ${s.att.length} حصص)</p>
+    <h2 style="color:#333;font-size:15px;margin:20px 0 8px;">⭐ النقاط</h2><p>النقاط: <strong>${s.pts}</strong> &nbsp;|&nbsp; الشارات: ${s.badges.join(' ')}</p>
+    <h2 style="color:#333;font-size:15px;margin:20px 0 8px;">🤖 توصيات AI</h2><ul>${aiTips(s).map(t => `<li>${t}</li>`).join('')}</ul>
+    <h2 style="color:#333;font-size:15px;margin:20px 0 8px;">📋 سجل الحصص</h2>
+    <table style="width:100%;border-collapse:collapse;"><tr><th style="padding:8px 12px;border:1px solid #ddd;">التاريخ</th><th style="padding:8px 12px;border:1px solid #ddd;">Logic</th><th style="padding:8px 12px;border:1px solid #ddd;">Coding</th><th style="padding:8px 12px;border:1px solid #ddd;">Creativity</th><th style="padding:8px 12px;border:1px solid #ddd;">ملاحظات</th></tr>
+    ${s.sessions.map(ses => `<tr><td style="padding:8px 12px;border:1px solid #ddd;">${ses.date}</td><td style="padding:8px 12px;border:1px solid #ddd;">${ses.logic}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${ses.coding}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${ses.creativity || ses.cre}/5</td><td style="padding:8px 12px;border:1px solid #ddd;">${ses.notes}</td></tr>`).join('')}
+    </table>
+    <div style="margin-top:40px;font-size:11px;color:#999;border-top:1px solid #ddd;padding-top:10px;text-align:center;">⚡ Technova Academy | STEM Horizon – ${new Date().toLocaleDateString('ar-EG')}</div>
+  `;
+  document.body.appendChild(element);
+  try {
+    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.save(`تقرير_${s.name}_${new Date().toISOString().slice(0,10)}.pdf`);
+  } catch (err) {
+    console.error('PDF error', err);
+    alert('حدث خطأ أثناء إنشاء PDF');
+  }
+  document.body.removeChild(element);
 }
 
 // ==================== INITIAL LOAD ====================
 window.addEventListener('load', async () => {
-  const token = new URLSearchParams(location.search).get('qr_token');
-  if (token) {
-    await syncAllData();
-    const student = DB.students.find(s => s.qr_token === token);
-    if (student) {
-      currentUser = { role: 'parent', studentId: student.id };
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('parent-app').style.display = 'block';
-      renderParentDash(student.id);
-      return;
-    }
-  }
   if (supa) {
+    await ensureAdminUser(); // إنشاء مستخدم admin تلقائياً
+    const token = new URLSearchParams(location.search).get('qr_token');
+    if (token) {
+      await syncAllData();
+      const student = DB.students.find(s => s.qr_token === token);
+      if (student) {
+        currentUser = { role: 'parent', studentId: student.id };
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('parent-app').style.display = 'block';
+        renderParentDash(student.id);
+        return;
+      }
+    }
     const { data: { session } } = await supa.auth.getSession();
     if (session) {
-      currentUser = { role: 'admin', email: session.user.email, name: session.user.email.split('@')[0] };
+      currentUser = { role: 'admin', email: session.user.email, name: session.user.user_metadata?.name || session.user.email.split('@')[0] };
       await syncAllData();
       showApp();
     }
   } else {
-    // بيانات افتراضية للتجربة بدون supabase
+    // بيانات افتراضية للتجربة بدون Supabase
     DB.students = [
       { id:1, name:"أحمد محمد", age:12, phone:"01012345678", lvlId:1, em:"🧑", notes:"متحمس", badges:["🚀"], pts:320, qr_token:"tok_ahmed_001", sessions:[{ id:1, date:"2024-03-01", understanding:4, application:3, behavior:5, logic:4, coding:3, creativity:4, notes:"جيد" }], att:[true,true,false,true,true] },
       { id:2, name:"سارة علي", age:11, phone:"01098765432", lvlId:1, em:"👧", notes:"مبدعة", badges:["🌟"], pts:280, qr_token:"tok_sara_002", sessions:[], att:[true,false,true,true,true] }
     ];
     DB.levels = [{ id:1, name:"Level 1", trainer_id:1, curriculum:"Scratch", content_url:"" }];
     DB.trainers = [{ id:1, name:"محمد", emoji:"👨‍🏫", rating:4.5, sessions_count:10 }];
+    generateAlerts();
     renderDash();
   }
 });
